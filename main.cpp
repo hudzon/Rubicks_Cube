@@ -4,6 +4,8 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	int mass[6][3][3];
+	string error = "";
+	Cube cube;
 
 	if (argc < 2) {
 		cout << "No input file!" << endl;
@@ -21,30 +23,33 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	if (!readFile(argv[1], mass)) {
-		system("PAUSE");
-		return 0;
+	error = readFile(argv[1], mass);
+
+	if (error == "") {
+		cube = Cube(mass);
+		cube.assemble();
+
+		if (!cube.isAssembly()) {
+			error = "It is impossible to assemble Rubick's cube, because he was mechanically disassembled!\n";
+		}
+		else if (writeFile(argv[2], cube.getScramble())) {
+				cout << "Sucñess!" << endl;
+			}
+			else {
+				cout << "Error writing to file!" << endl;
+				system("PAUSE");
+			}
 	}
 
-	Cube cube(mass);
-
-	cube.assemble();
-
-	if (!cube.isAssembly()) {
-		cout << "It is impossible to assemble Rubick's cube, because he was mechanically disassembled!" << endl;
-		system("PAUSE");
-		return 0;
+	if (error != "") {
+		ofstream fout(argv[2]);
+		fout << error;
+		fout.close();
 	}
-
-	if (writeFile(argv[2], cube.getScramble()))
-		cout << "Sucñess!" << endl;
-	else cout << "Error writing to file!" << endl;
-
-	system("PAUSE");
 	return 0;
 }
 
-bool readFile(char* nameFile, int mass[6][3][3]) {
+string readFile(char* nameFile, int mass[6][3][3]) {
 	ifstream fin(nameFile);
 	int checkColors[6];
 
@@ -52,9 +57,8 @@ bool readFile(char* nameFile, int mass[6][3][3]) {
 		checkColors[i] = 0;
 
 	if (!fin.is_open()) {
-		cout << "File isn't open!\n";
 		fin.close();
-		return false;
+		return "File isn't open!\n";
 	}
 
 	int k = 0;
@@ -66,15 +70,15 @@ bool readFile(char* nameFile, int mass[6][3][3]) {
 		getline(fin, buff);
 
 		if (!lineFormat(buff)) {
-			cout << "Line number " << k + 1 << " have wrong format of input data!" << endl;
 			fin.close();
-			return false;
+			stringstream out;
+			out << k + 1;
+			return string("Line number " + out.str() + " have wrong format of input data!\n");
 		}
 
 		if (k > 17) {
-			cout << "Too much lines in input  file!" << endl;
 			fin.close();
-			return false;
+			return "Too much lines in input  file!\n";
 		}
 
 		for (int i = 0; i < 3; i++) {
@@ -85,22 +89,20 @@ bool readFile(char* nameFile, int mass[6][3][3]) {
 	}
 
 	if (k < 18) {
-		cout << "Little lines in input file!" << endl;
 		fin.close();
-		return false;
+		return "Little lines in input file!\n";
 	}
 
 	for (int i = 0; i < 6; i++) {
 		if (checkColors[i] != 9) {
-			cout << "Input data don't match with Rubick's cube!" << endl;
 			fin.close();
-			return false;
+			return "Input data don't match with Rubick's cube!\n";
 		}
 	}
 
 	fin.close();
 
-	return true;
+	return "";
 }
 
 bool writeFile(char* nameFile, string str) {
@@ -128,7 +130,7 @@ bool writeFile(char* nameFile, string str) {
 
 bool lineFormat(string line) {
 	bool equals = line.length() == 5 ? true : false;
-	for (int i = 0; i < line.length() && equals; i = i + 2)
+	for (int i = 0; (i < line.length()) && equals; i = i + 2)
 	{
 		if (((int)line[i] > 53) || ((int)line[i] < 48))
 			equals = false;
