@@ -1,0 +1,1 @@
+Input data don't match with Rubick's cube!
